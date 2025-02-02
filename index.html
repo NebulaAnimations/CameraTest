@@ -16,53 +16,46 @@
             padding: 5px;
             z-index: 1000;
         }
+        video {
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+        }
     </style>
 </head>
 <body>
     <div id="status">Initializing...</div>
     <video id="camera" autoplay muted playsinline></video>
+    <button onclick="startCamera()" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px;">Start Camera</button>
     <script>
         const status = document.getElementById('status');
+        const video = document.getElementById('camera');
 
-        function logStatus(message) {
-            console.log(message);
-            status.textContent = message;
+        function logStatus(msg) {
+            status.textContent = msg;
+            console.log(msg);
         }
 
         async function startCamera() {
             try {
-                logStatus('Checking permissions...');
+                logStatus('Requesting camera...');
                 
-                // Try to get camera permissions explicitly
-                const permissionResult = await navigator.permissions.query({ name: 'camera' });
-                logStatus('Permission status: ' + permissionResult.state);
-
-                const constraints = {
-                    video: { facingMode: 'environment' },
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,  // Simplified request
                     audio: false
-                };
-
-                logStatus('Requesting camera stream...');
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                });
                 
-                const video = document.getElementById('camera');
+                logStatus('Got camera stream');
                 video.srcObject = stream;
-                logStatus('Camera stream obtained');
-
-                video.onloadedmetadata = () => {
-                    video.play().catch(e => logStatus('Play error: ' + e));
-                };
+                
+                // Wait for video to be ready
+                await video.play();
+                logStatus('Camera active');
+                
             } catch (err) {
-                logStatus('Error: ' + err.message + '\nType: ' + err.name);
-                console.error('Detailed error:', err);
+                logStatus('Error: ' + err.name + ' - ' + err.message);
             }
         }
-
-        // Start after page is fully loaded
-        window.onload = () => {
-            logStatus('Page loaded, starting camera...');
-            startCamera();
-        };
     </script>
 </body>
 </html>
