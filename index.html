@@ -3,52 +3,61 @@
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        #log {
-            white-space: pre-wrap;
-            font-family: monospace;
+        body { 
+            margin: 0; 
+            background: black;
+        }
+        #container {
+            margin: 0 auto;
+            width: 100vw;
+            height: 100vh;
+        }
+        #videoElement {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background-color: #666;
+        }
+        #status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.5);
+            padding: 5px;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
-    <div id="log">Starting...</div>
-    <button onclick="checkPermissions()">Check Permissions</button>
-    <button onclick="requestPermissions()">Request Permissions</button>
+    <div id="status">Initializing...</div>
+    <div id="container">
+        <video autoplay playsinline id="videoElement"></video>
+    </div>
     <script>
-        const log = document.getElementById('log');
-        
-        function addLog(msg) {
-            log.textContent += '\n' + msg;
-            console.log(msg);
-        }
+        const video = document.querySelector("#videoElement");
+        const status = document.querySelector("#status");
 
-        async function checkPermissions() {
+        async function startVideo() {
             try {
-                addLog('Checking camera permission...');
-                const result = await navigator.permissions.query({ name: 'camera' });
-                addLog('Permission state: ' + result.state);
-            } catch(e) {
-                addLog('Check error: ' + e.message);
+                status.textContent = 'Requesting camera...';
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                video.srcObject = stream;
+                status.textContent = 'Camera active';
+            } catch (err) {
+                status.textContent = `Error: ${err.name} - ${err.message}`;
+                console.error('Camera error:', err);
             }
         }
 
-        async function requestPermissions() {
-            try {
-                addLog('Requesting camera...');
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                addLog('Devices found: ' + devices.length);
-                devices.forEach(d => addLog(d.kind + ': ' + d.label));
-            } catch(e) {
-                addLog('Request error: ' + e.message);
-            }
-        }
-
-        // Log initial state
-        addLog('Page loaded');
-        if (navigator.mediaDevices) {
-            addLog('mediaDevices available');
-        } else {
-            addLog('NO mediaDevices!');
-        }
+        // Start video after a short delay to ensure permissions are ready
+        setTimeout(startVideo, 1000);
     </script>
 </body>
 </html>
