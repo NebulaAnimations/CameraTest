@@ -12,13 +12,42 @@
             height: 100vh; 
             object-fit: cover;
         }
+        #status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background: rgba(0,0,0,0.5);
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
+    <div id="status">Waiting for camera...</div>
     <video id="camera" autoplay playsinline></video>
     <script>
+        const status = document.getElementById('status');
+
+        // Check permissions first
+        async function checkPermissions() {
+            try {
+                const result = await navigator.permissions.query({ name: 'camera' });
+                if (result.state === 'granted') {
+                    startCamera();
+                } else {
+                    // Wait a bit and try again
+                    setTimeout(checkPermissions, 1000);
+                }
+            } catch (err) {
+                // Some browsers don't support permission checking
+                // Just try to start the camera
+                startCamera();
+            }
+        }
+
         async function startCamera() {
             try {
+                status.textContent = 'Starting camera...';
                 const stream = await navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: 'environment',
@@ -28,12 +57,18 @@
                 });
                 const video = document.getElementById('camera');
                 video.srcObject = stream;
+                status.textContent = 'Camera active';
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 2000);
             } catch (err) {
+                status.textContent = 'Camera error: ' + err.message;
                 console.error('Camera error:', err);
             }
         }
 
-        startCamera();
+        // Start checking for permissions
+        checkPermissions();
     </script>
 </body>
 </html>
